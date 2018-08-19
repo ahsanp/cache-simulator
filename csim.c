@@ -116,7 +116,14 @@ void init_cache(cache **cache_pointer, int set_bits_count,
 
 void delete_cache(cache **cache_pointer)
 {
-
+    int no_of_lines = *cache_pointer -> lines_count;
+    cache_set *sets = *cache_pointer -> sets;
+    for (int i = 0; i < no_of_lines; i++) {
+        free((sets + i) -> tags);
+        free((sets + i) -> valid_bits);
+    }
+    free(sets);
+    free(*cache_pointer);
 }
 void upate_counts(cache *instance_cache, long address,
                   int *hits, int *misses, int *evictions)
