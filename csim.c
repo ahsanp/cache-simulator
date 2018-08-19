@@ -74,7 +74,44 @@ int main(int argc, char **argv, char **envp)
 void init_cache(cache **cache_pointer, int set_bits_count,
                 int lines_count, int byte_bits_count)
 {
+    cache *new_cache = (cache *) malloc(sizeof(cache));
+    if (new_cache == NULL) {
+        fprintf(stderr, "Error allocating memory for cache: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    int no_of_sets = 1 << set_bits_count;
+    cache_set *cache_sets_array = (cache_set *) malloc(sizeof(cache_set) * no_of_sets);
+    if (new_cache == NULL) {
+        fprintf(stderr, "Error allocating memory for cache sets: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    // prepare each cache set to hold lines_count number of lines
+    for (int i = 0; i < no_of_sets; i++) {
+        (cache_sets_array + i) -> tags = (long *) malloc(sizeof(long) * lines_count);
+        (cache_sets_array + i) -> tags = (char *) malloc(sizeof(char) * lines_count);
+    }
+    new_cache -> sets = cache_sets_array;
+    new_cache -> lines_count = lines_count;
+    long byte_mask, set_mask;
+    byte_mask = set_mask = 0;
+    int byte_mask_length, set_mask_length;
+    byte_mask_length = set_mask_length = 0;
+    // make byte mask and assign in cache
+    for (int i = 0; i < byte_bits_count; i++) {
+        byte_mask = (byte_mask << 1) + 1;
+        byte_mask_length++;
+    }
+    new_cache -> byte_mask = byte_mask;
+    new_cache -> byte_mask_length = byte_mask_length;
+    // make set mask and assign in cache
+    for (int i = 0; i < set_bits_count; i++) {
+        set_mask = (set_mask << 1) + 1;
+        set_mask_length++;
+    }
+    new_cache -> set_mask = set_mask;
+    new_cache -> set_mask_length = set_mask_length;
 
+    *cache_pointer = new_cache;
 }
 
 void delete_cache(cache **cache_pointer)
