@@ -34,4 +34,25 @@ void correctTrans(int M, int N, int A[N][M], int B[M][N]);
 void registerTransFunction(
     void (*trans)(int M,int N,int[N][M],int[M][N]), char* desc);
 
+typedef struct {
+    long *tags;
+    char *valid_bits;
+} cache_set;
+
+typedef struct {
+    cache_set *sets;
+    int lines_count;
+    long byte_mask;
+    long set_mask;
+    int byte_mask_length;
+    int set_mask_length;
+} cache;
+
+void init_cache(cache **cache_pointer,
+                int set_bits_count,
+                int lines_count, int byte_bits_count);
+void upate_counts(cache *instance_cache, long address,
+                  int *hits, int *misses, int *evictions);
+void delete_cache(cache **cache_pointer);
+
 #endif /* CACHELAB_TOOLS_H */
