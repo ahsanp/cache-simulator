@@ -36,7 +36,7 @@ void registerTransFunction(
 
 typedef struct {
     long *tags;
-    char *valid_bits;
+    unsigned long *valid_bits; // will be used for LRU policing
 } cache_set;
 
 typedef struct {
@@ -51,7 +51,7 @@ typedef struct {
 void init_cache(cache **cache_pointer,
                 int set_bits_count,
                 int lines_count, int byte_bits_count);
-void upate_counts(cache *instance_cache, long address,
+void update_counts(cache *instance_cache, long address, char op,
                   int *hits, int *misses, int *evictions);
 void delete_cache(cache **cache_pointer);
 
