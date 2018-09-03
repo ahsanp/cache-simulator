@@ -42,6 +42,7 @@ typedef struct {
 typedef struct {
     cache_set *sets;
     int lines_count;
+    int no_of_sets;
     long byte_mask;
     long set_mask;
     int byte_mask_length;
