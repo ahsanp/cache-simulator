@@ -3,10 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <getopt.h>
 #include "cachelab.h"
 
 #define BUFF_SIZE 1024
+#define MAX_HEX_DIGITS 17 // accomodate the termination character
 
 int main(int argc, char **argv, char **envp)
 {
@@ -56,15 +58,18 @@ int main(int argc, char **argv, char **envp)
 
     char *buffer = malloc(BUFF_SIZE);
     int req_size; // size of request
-    long address; // the memory address
+    unsigned long address;
     char req_type; // Kind of request (S, M, L)
-
     while (fgets(buffer, BUFF_SIZE, f_stream) != NULL) {
-        sscanf(buffer, " %c %ld,%d", &req_type, &address, &req_size);
-        update_counts(instance_cache, req_type, address,
+        sscanf(buffer, " %c %lx,%d", &req_type, &address, &req_size);
+        if (req_type == 'I') {
+            continue;
+        }
+        update_counts(instance_cache, address, req_type,
                       &hits, &misses, &evictions);
     }
     fclose(f_stream);
+    free(buffer);
     delete_cache(&instance_cache);
 
     printSummary(hits, misses, evictions);
@@ -88,10 +93,18 @@ void init_cache(cache **cache_pointer, int set_bits_count,
     // prepare each cache set to hold lines_count number of lines
     for (int i = 0; i < no_of_sets; i++) {
         (cache_sets_array + i) -> tags = (long *) malloc(sizeof(long) * lines_count);
-        (cache_sets_array + i) -> tags = (char *) malloc(sizeof(char) * lines_count);
+        unsigned long *valid_bits = (unsigned long *) malloc(sizeof(long) * lines_count);
+        // it is important that valid_bits array must be initialized to 0
+        // it will be used for the LRU policy as well
+        // increment last used by one
+        for (int j = 0; j < lines_count; j++) {
+            *(valid_bits + j) = 0;
+        }
+        (cache_sets_array + i) -> valid_bits = valid_bits;
     }
     new_cache -> sets = cache_sets_array;
     new_cache -> lines_count = lines_count;
+    new_cache -> no_of_sets = no_of_sets;
     long byte_mask, set_mask;
     byte_mask = set_mask = 0;
     int byte_mask_length, set_mask_length;
@@ -116,17 +129,81 @@ void init_cache(cache **cache_pointer, int set_bits_count,
 
 void delete_cache(cache **cache_pointer)
 {
-    int no_of_lines = *cache_pointer -> lines_count;
-    cache_set *sets = *cache_pointer -> sets;
-    for (int i = 0; i < no_of_lines; i++) {
+    cache *temp = *cache_pointer;
+    int no_of_sets = temp -> no_of_sets;
+    cache_set *sets = temp -> sets;
+    for (int i = 0; i < no_of_sets; i++) {
         free((sets + i) -> tags);
         free((sets + i) -> valid_bits);
     }
     free(sets);
     free(*cache_pointer);
 }
-void upate_counts(cache *instance_cache, long address,
-                  int *hits, int *misses, int *evictions)
+void update_counts(cache *instance_cache, long address, char op,
+                   int *hits, int *misses, int *evictions)
 {
+    // int needed_byte = address & (instance_cache -> byte_mask);
+    int needed_set = ((address >> (instance_cache -> byte_mask_length)) &
+                      (instance_cache -> set_mask)); // index into array of sets
+    int needed_tag = ((address >> (instance_cache -> byte_mask_length)) >>
+                      (instance_cache -> set_mask_length));
+    // retrieve particular set from cache
+    cache_set *target_set = (instance_cache -> sets) + needed_set;
+    long *tags = target_set -> tags;
+    unsigned long *valid_bits = target_set -> valid_bits;
+    int lines_count = instance_cache -> lines_count;
+    int line_index = -1;
+    int least_used_index = -1;
+    unsigned long max_valid_bit = 0;
+    unsigned long min_valid_bit = ULONG_MAX;
+    int i = 0;
+    // see if there is a better way to do this
+    while (i < lines_count) {
+        // tag must be equal and valid_bit must not be 0
+        if (*(valid_bits + i) && *(tags + i) == needed_tag) {
+            // it will come here only once
+            // and that too if the tag exists in the array
+            line_index = i;
+        }
+        // see if current valid bit is smaller
+        // if so replace the index and min_valid_bit
+        if (*(valid_bits + i) < min_valid_bit) {
+            least_used_index = i;
+            min_valid_bit = *(valid_bits + i);
+        }
+        // see if the valid bit if bigger
+        // this will be used to figure out the value
+        // of the LRU value of the target cache line
+        if (*(valid_bits + i) > max_valid_bit) {
+            max_valid_bit = *(valid_bits + i);
+        }
+        i++;
+    }
+    // by this point we have either found the target line
+    // or we will not have found the target line because it
+    // doesn't exist in the cache. So we will allocate
+    // the LRU based index for that particular block of memory
+    if (line_index != -1) {
+        // if found perform operation
+        // this will always be a hit(s)
+        *hits = *hits + 1;
+        if (op == 'M') {
+            *hits = *hits + 1;
+        }
 
+    } else {
+        // if not found
+        *misses = *misses + 1;
+        if (*(valid_bits + least_used_index) != 0) {
+            // this means that the cache was previously
+            // allocated
+            *evictions = *evictions + 1;
+        }
+        if (op == 'M') {
+            *hits = *hits + 1;
+        }
+        *(tags + least_used_index) = needed_tag;
+        line_index = least_used_index;
+    }
+    *(valid_bits + line_index) = max_valid_bit + 1; // increase LRU
 }
