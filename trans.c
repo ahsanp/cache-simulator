@@ -12,6 +12,35 @@
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
+void transpose_32_32(int M, int N, int A[N][M], int B[M][N]) {
+    int block_size = 4;
+    int diag_cord, diag_val;
+    int diag_flag = 0;
+    for (int rr = 0; rr < N; rr += block_size) {
+        // move block row wise
+        for (int cc = 0; cc < M; cc += block_size) {
+            // move block column wise
+            for (int c = cc; c < cc + block_size; c++) {
+                // iterate through each column of block
+                for (int r = rr; r < rr + block_size; r++) {
+                    // iterate through each row of block
+                    if (r != c) {
+                        B[r][c] = A[c][r];
+                    } else {
+                        diag_flag = 1;
+                        diag_cord = r; // r == c
+                        diag_val = A[r][c];
+                    }
+                }
+                if (diag_flag) {
+                    B[diag_cord][diag_cord] = diag_val;
+                    diag_flag = 0;
+                }
+            }
+        }
+    }
+}
+
 /*
  * transpose_submit - This is the solution transpose function that you
  *     will be graded on for Part B of the assignment. Do not change
@@ -22,16 +51,8 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
-    int block_size = 0;
-    for (int rr = 0; rr < N; rr += block_size) {
-        for (int cc = 0; cc < M; cc += block_size) {
-            for (int c = cc; c < cc + block_size; c++) {
-                for (int r = rr; r < rr + block_size; r++) {
-                    B[r][c] = A[c][r];
-                }
-            }
-        }
-    }
+    if (M == N && M == 32)
+        transpose_32_32(M, N, A, B);
 }
 
 /*
