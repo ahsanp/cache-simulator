@@ -1,4 +1,4 @@
-/* 
+/*
  * trans.c - Matrix transpose B = A^T
  *
  * Each transpose function must have a prototype of the form:
@@ -6,30 +6,61 @@
  *
  * A transpose function is evaluated by counting the number of misses
  * on a 1KB direct mapped cache with a block size of 32 bytes.
- */ 
+ */
 #include <stdio.h>
 #include "cachelab.h"
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
-/* 
+void transpose_32_32(int M, int N, int A[N][M], int B[M][N]) {
+    int block_size = 4;
+    int diag_cord, diag_val;
+    int diag_flag = 0;
+    for (int rr = 0; rr < N; rr += block_size) {
+        // move block row wise
+        for (int cc = 0; cc < M; cc += block_size) {
+            // move block column wise
+            for (int c = cc; c < cc + block_size; c++) {
+                // iterate through each column of block
+                for (int r = rr; r < rr + block_size; r++) {
+                    // iterate through each row of block
+                    if (r != c) {
+                        B[r][c] = A[c][r];
+                    } else {
+                        diag_flag = 1;
+                        diag_cord = r; // r == c
+                        diag_val = A[r][c];
+                    }
+                }
+                if (diag_flag) {
+                    B[diag_cord][diag_cord] = diag_val;
+                    diag_flag = 0;
+                }
+            }
+        }
+    }
+}
+
+/*
  * transpose_submit - This is the solution transpose function that you
  *     will be graded on for Part B of the assignment. Do not change
  *     the description string "Transpose submission", as the driver
  *     searches for that string to identify the transpose function to
- *     be graded. 
+ *     be graded.
  */
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
+    if (M == N && M == 32)
+        transpose_32_32(M, N, A, B);
 }
 
-/* 
+/*
  * You can define additional transpose functions below. We've defined
- * a simple one below to help you get started. 
- */ 
+ * a simple one below to help you get started.
+ */
 
-/* 
+/*
  * trans - A simple baseline transpose function, not optimized for the cache.
  */
 char trans_desc[] = "Simple row-wise scan transpose";
@@ -42,7 +73,7 @@ void trans(int M, int N, int A[N][M], int B[M][N])
             tmp = A[i][j];
             B[j][i] = tmp;
         }
-    }    
+    }
 
 }
 
@@ -56,14 +87,14 @@ void trans(int M, int N, int A[N][M], int B[M][N])
 void registerFunctions()
 {
     /* Register your solution function */
-    registerTransFunction(transpose_submit, transpose_submit_desc); 
+    registerTransFunction(transpose_submit, transpose_submit_desc);
 
     /* Register any additional transpose functions */
-    registerTransFunction(trans, trans_desc); 
+    registerTransFunction(trans, trans_desc);
 
 }
 
-/* 
+/*
  * is_transpose - This helper function checks if B is the transpose of
  *     A. You can check the correctness of your transpose by calling
  *     it before returning from the transpose function.
@@ -81,4 +112,3 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N])
     }
     return 1;
 }
-
