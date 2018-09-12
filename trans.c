@@ -10,19 +10,20 @@
 #include <stdio.h>
 #include "cachelab.h"
 
+#define BLOCK_SIZE 8
+
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
 void transpose_32_32(int M, int N, int A[N][M], int B[M][N]) {
-    int block_size = 4;
     int diag_cord, diag_val;
     int diag_flag = 0;
-    for (int rr = 0; rr < N; rr += block_size) {
+    for (int rr = 0; rr < N; rr += BLOCK_SIZE) {
         // move block row wise
-        for (int cc = 0; cc < M; cc += block_size) {
+        for (int cc = 0; cc < M; cc += BLOCK_SIZE) {
             // move block column wise
-            for (int c = cc; c < cc + block_size; c++) {
+            for (int c = cc; c < cc + BLOCK_SIZE; c++) {
                 // iterate through each column of block
-                for (int r = rr; r < rr + block_size; r++) {
+                for (int r = rr; r < rr + BLOCK_SIZE; r++) {
                     // iterate through each row of block
                     if (r != c) {
                         B[r][c] = A[c][r];
@@ -40,6 +41,7 @@ void transpose_32_32(int M, int N, int A[N][M], int B[M][N]) {
         }
     }
 }
+
 
 /*
  * transpose_submit - This is the solution transpose function that you
