@@ -46,6 +46,8 @@ void transpose_32_32(int M, int N, int A[N][M], int B[M][N])
 void transpose_64_64(int M, int N, int A[N][M], int B[M][N])
 {
     int a0, a1, a2, a3, a4, a5, a6, a7;
+    // rr and cc are use to iterate over
+    // rows and columns block wise respectively
     for (int rr = 0; rr < N; rr += BLOCK_SIZE) {
         for (int cc = 0; cc < M; cc += BLOCK_SIZE) {
             for (int iter = 0; iter < BLOCK_SIZE; iter++) {
@@ -82,6 +84,26 @@ void transpose_64_64(int M, int N, int A[N][M], int B[M][N])
     }
 }
 
+void transpose_61_67(int M, int N, int A[N][M], int B[M][N])
+{
+    for (int rr = 0; rr < N; rr += BLOCK_SIZE) {
+        // move block row wise
+        for (int cc = 0; cc < M; cc += BLOCK_SIZE) {
+            // move block column wise
+            for (int c = cc; c < cc + BLOCK_SIZE; c++) {
+                // iterate through each column of block
+                for (int r = rr; r < rr + BLOCK_SIZE; r++) {
+                    // iterate through each row of block
+                    if (r >= N || c >= M) {
+                        // bounds checking
+                        continue;
+                    }
+                    B[c][r] = A[r][c];
+                }
+            }
+        }
+    }
+}
 
 /*
  * transpose_submit - This is the solution transpose function that you
@@ -97,6 +119,8 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
         transpose_32_32(M, N, A, B);
     else if (M == N && M == 64)
         transpose_64_64(M, N, A, B);
+    else if (N == 61 && M == 67)
+        transpose_61_67(M, N, A, B);
 }
 
 /*
