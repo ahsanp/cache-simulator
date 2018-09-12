@@ -63,10 +63,14 @@ void transpose_64_64(int M, int N, int A[N][M], int B[M][N]) {
                 B[rr + 3][cc + iter] = a3;
             }
             for (int iter = BLOCK_SIZE - 1; iter > 0; iter--) {
-                B[rr + 4][cc + iter] = A[cc + iter][rr + 4];
-                B[rr + 5][cc + iter] = A[cc + iter][rr + 5];
-                B[rr + 6][cc + iter] = A[cc + iter][rr + 6];
-                B[rr + 7][cc + iter] = A[cc + iter][rr + 7];
+                a0 = A[cc + iter][rr + 4];
+                a1 = A[cc + iter][rr + 5];
+                a2 = A[cc + iter][rr + 6];
+                a3 = A[cc + iter][rr + 7];
+                B[rr + 4][cc + iter] = a0;
+                B[rr + 5][cc + iter] = a1;
+                B[rr + 6][cc + iter] = a2;
+                B[rr + 7][cc + iter] = a3;
             }
             B[rr + 4][cc] = a4;
             B[rr + 5][cc] = a5;
