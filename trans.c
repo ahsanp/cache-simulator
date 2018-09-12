@@ -42,6 +42,40 @@ void transpose_32_32(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
+void transpose_64_64(int M, int N, int A[N][M], int B[M][N]) {
+    int a0, a1, a2, a3, a4, a5, a6, a7;
+    for (int rr = 0; rr < N; rr += BLOCK_SIZE) {
+        for (int cc = 0; cc < M; cc += BLOCK_SIZE) {
+            for (int iter = 0; iter < BLOCK_SIZE; iter++) {
+                a0 = A[cc + iter][rr];
+                a1 = A[cc + iter][rr + 1];
+                a2 = A[cc + iter][rr + 2];
+                a3 = A[cc + iter][rr + 3];
+                if (iter == 0) {
+                    a4 = A[cc + iter][rr + 4];
+                    a5 = A[cc + iter][rr + 5];
+                    a6 = A[cc + iter][rr + 6];
+                    a7 = A[cc + iter][rr + 7];
+                }
+                B[rr][cc + iter] = a0;
+                B[rr + 1][cc + iter] = a1;
+                B[rr + 2][cc + iter] = a2;
+                B[rr + 3][cc + iter] = a3;
+            }
+            for (int iter = BLOCK_SIZE - 1; iter > 0; iter--) {
+                B[rr + 4][cc + iter] = A[cc + iter][rr + 4];
+                B[rr + 5][cc + iter] = A[cc + iter][rr + 5];
+                B[rr + 6][cc + iter] = A[cc + iter][rr + 6];
+                B[rr + 7][cc + iter] = A[cc + iter][rr + 7];
+            }
+            B[rr + 4][cc] = a4;
+            B[rr + 5][cc] = a5;
+            B[rr + 6][cc] = a6;
+            B[rr + 7][cc] = a7;
+        }
+    }
+}
+
 
 /*
  * transpose_submit - This is the solution transpose function that you
@@ -55,6 +89,8 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
     if (M == N && M == 32)
         transpose_32_32(M, N, A, B);
+    else if (M == N && M == 64)
+        transpose_64_64(M, N, A, B);
 }
 
 /*
