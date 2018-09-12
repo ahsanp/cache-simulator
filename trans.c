@@ -11,6 +11,7 @@
 #include "cachelab.h"
 
 #define BLOCK_SIZE 8
+#define BLOCK_SIZE_16 16
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
@@ -86,13 +87,13 @@ void transpose_64_64(int M, int N, int A[N][M], int B[M][N])
 
 void transpose_61_67(int M, int N, int A[N][M], int B[M][N])
 {
-    for (int rr = 0; rr < N; rr += BLOCK_SIZE) {
+    for (int rr = 0; rr < N; rr += BLOCK_SIZE_16) {
         // move block row wise
-        for (int cc = 0; cc < M; cc += BLOCK_SIZE) {
+        for (int cc = 0; cc < M; cc += BLOCK_SIZE_16) {
             // move block column wise
-            for (int c = cc; c < cc + BLOCK_SIZE; c++) {
+            for (int c = cc; c < cc + BLOCK_SIZE_16; c++) {
                 // iterate through each column of block
-                for (int r = rr; r < rr + BLOCK_SIZE; r++) {
+                for (int r = rr; r < rr + BLOCK_SIZE_16; r++) {
                     // iterate through each row of block
                     if (r >= N || c >= M) {
                         // bounds checking
