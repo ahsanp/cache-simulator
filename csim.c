@@ -48,8 +48,8 @@ int main(int argc, char **argv, char **envp)
     }
 
     // initialize cache
-    cache *instance_cache;
-    init_cache(&instance_cache, set_bits_count, lines_count, byte_bits_count);
+    cache *instance_cache = init_cache(set_bits_count,
+                                       lines_count, byte_bits_count);
     // open file, start reading and updating counts per line
     FILE *f_stream = fopen(trace_name, "r");
     if (f_stream == NULL) {
@@ -63,6 +63,7 @@ int main(int argc, char **argv, char **envp)
     while (fgets(buffer, BUFF_SIZE, f_stream) != NULL) {
         sscanf(buffer, " %c %lx,%d", &req_type, &address, &req_size);
         if (req_type == 'I') {
+            // Skipping instruction accesses
             continue;
         }
         update_counts(instance_cache, address, req_type,
@@ -70,14 +71,14 @@ int main(int argc, char **argv, char **envp)
     }
     fclose(f_stream);
     free(buffer);
-    delete_cache(&instance_cache);
+    delete_cache(instance_cache);
 
     printSummary(hits, misses, evictions);
     return 0;
 }
 
-void init_cache(cache **cache_pointer, int set_bits_count,
-                int lines_count, int byte_bits_count)
+cache *init_cache(int set_bits_count, int lines_count,
+                int byte_bits_count)
 {
     cache *new_cache = (cache *) malloc(sizeof(cache));
     if (new_cache == NULL) {
@@ -124,20 +125,19 @@ void init_cache(cache **cache_pointer, int set_bits_count,
     new_cache -> set_mask = set_mask;
     new_cache -> set_mask_length = set_mask_length;
 
-    *cache_pointer = new_cache;
+    return new_cache;
 }
 
-void delete_cache(cache **cache_pointer)
+void delete_cache(cache *cache)
 {
-    cache *temp = *cache_pointer;
-    int no_of_sets = temp -> no_of_sets;
-    cache_set *sets = temp -> sets;
+    int no_of_sets = cache -> no_of_sets;
+    cache_set *sets = cache -> sets;
     for (int i = 0; i < no_of_sets; i++) {
         free((sets + i) -> tags);
         free((sets + i) -> valid_bits);
     }
     free(sets);
-    free(*cache_pointer);
+    free(cache);
 }
 void update_counts(cache *instance_cache, long address, char op,
                    int *hits, int *misses, int *evictions)
