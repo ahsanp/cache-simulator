@@ -14,7 +14,8 @@
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
-void transpose_32_32(int M, int N, int A[N][M], int B[M][N]) {
+void transpose_32_32(int M, int N, int A[N][M], int B[M][N])
+{
     int diag_cord, diag_val;
     int diag_flag = 0;
     for (int rr = 0; rr < N; rr += BLOCK_SIZE) {
@@ -42,7 +43,8 @@ void transpose_32_32(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
-void transpose_64_64(int M, int N, int A[N][M], int B[M][N]) {
+void transpose_64_64(int M, int N, int A[N][M], int B[M][N])
+{
     int a0, a1, a2, a3, a4, a5, a6, a7;
     for (int rr = 0; rr < N; rr += BLOCK_SIZE) {
         for (int cc = 0; cc < M; cc += BLOCK_SIZE) {
