@@ -10,19 +10,20 @@
 #include <stdio.h>
 #include "cachelab.h"
 
+#define BLOCK_SIZE 8
+
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
 void transpose_32_32(int M, int N, int A[N][M], int B[M][N]) {
-    int block_size = 4;
     int diag_cord, diag_val;
     int diag_flag = 0;
-    for (int rr = 0; rr < N; rr += block_size) {
+    for (int rr = 0; rr < N; rr += BLOCK_SIZE) {
         // move block row wise
-        for (int cc = 0; cc < M; cc += block_size) {
+        for (int cc = 0; cc < M; cc += BLOCK_SIZE) {
             // move block column wise
-            for (int c = cc; c < cc + block_size; c++) {
+            for (int c = cc; c < cc + BLOCK_SIZE; c++) {
                 // iterate through each column of block
-                for (int r = rr; r < rr + block_size; r++) {
+                for (int r = rr; r < rr + BLOCK_SIZE; r++) {
                     // iterate through each row of block
                     if (r != c) {
                         B[r][c] = A[c][r];
@@ -41,6 +42,45 @@ void transpose_32_32(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
+void transpose_64_64(int M, int N, int A[N][M], int B[M][N]) {
+    int a0, a1, a2, a3, a4, a5, a6, a7;
+    for (int rr = 0; rr < N; rr += BLOCK_SIZE) {
+        for (int cc = 0; cc < M; cc += BLOCK_SIZE) {
+            for (int iter = 0; iter < BLOCK_SIZE; iter++) {
+                a0 = A[cc + iter][rr];
+                a1 = A[cc + iter][rr + 1];
+                a2 = A[cc + iter][rr + 2];
+                a3 = A[cc + iter][rr + 3];
+                if (iter == 0) {
+                    a4 = A[cc + iter][rr + 4];
+                    a5 = A[cc + iter][rr + 5];
+                    a6 = A[cc + iter][rr + 6];
+                    a7 = A[cc + iter][rr + 7];
+                }
+                B[rr][cc + iter] = a0;
+                B[rr + 1][cc + iter] = a1;
+                B[rr + 2][cc + iter] = a2;
+                B[rr + 3][cc + iter] = a3;
+            }
+            for (int iter = BLOCK_SIZE - 1; iter > 0; iter--) {
+                a0 = A[cc + iter][rr + 4];
+                a1 = A[cc + iter][rr + 5];
+                a2 = A[cc + iter][rr + 6];
+                a3 = A[cc + iter][rr + 7];
+                B[rr + 4][cc + iter] = a0;
+                B[rr + 5][cc + iter] = a1;
+                B[rr + 6][cc + iter] = a2;
+                B[rr + 7][cc + iter] = a3;
+            }
+            B[rr + 4][cc] = a4;
+            B[rr + 5][cc] = a5;
+            B[rr + 6][cc] = a6;
+            B[rr + 7][cc] = a7;
+        }
+    }
+}
+
+
 /*
  * transpose_submit - This is the solution transpose function that you
  *     will be graded on for Part B of the assignment. Do not change
@@ -53,6 +93,8 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
     if (M == N && M == 32)
         transpose_32_32(M, N, A, B);
+    else if (M == N && M == 64)
+        transpose_64_64(M, N, A, B);
 }
 
 /*
