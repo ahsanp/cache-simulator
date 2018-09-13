@@ -106,9 +106,9 @@ void update_counts(cache *instance_cache, long address, char op,
     int least_used_index = -1;
     unsigned long max_valid_bit = 0;
     unsigned long min_valid_bit = ULONG_MAX;
-    int i = 0;
-    // see if there is a better way to do this
-    while (i < lines_count) {
+
+    // Find matching tag, maximum LRU value and minimum LRU value line
+    for (int i = 0; i < lines_count; i++) {
         // tag must be equal and valid_bit must not be 0
         if (*(valid_bits + i) && *(tags + i) == needed_tag) {
             // it will come here only once
@@ -127,7 +127,6 @@ void update_counts(cache *instance_cache, long address, char op,
         if (*(valid_bits + i) > max_valid_bit) {
             max_valid_bit = *(valid_bits + i);
         }
-        i++;
     }
     // by this point we have either found the target line
     // or we will not have found the target line because it
