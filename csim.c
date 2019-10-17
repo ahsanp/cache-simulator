@@ -8,7 +8,7 @@
 #define BUFF_SIZE 1024
 #define MAX_HEX_DIGITS 17 // accomodate the termination character
 
-int main(int argc, char **argv, char **envp)
+int main(int argc, char **argv)
 {
     int hits, misses, evictions;
     int opt, set_bits_count, lines_count, byte_bits_count;
